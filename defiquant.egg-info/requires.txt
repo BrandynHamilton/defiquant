@@ -1,0 +1,5 @@
+pandas
+numpy
+dotenv
+requests
+dune_client

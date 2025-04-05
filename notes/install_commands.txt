@@ -1,0 +1,2 @@
+pip install defiquant
+pip install defiquant[onchain]
