@@ -1,3 +1,4 @@
 test_env/
 defiquant_env/
 *.env
+*.egg-info/

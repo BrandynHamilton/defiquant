@@ -9,11 +9,15 @@ from defiquant.env import (COINGECKO_API_KEY, VAULTSFYI_KEY, FLIPSIDE_API_KEY, F
 from defiquant.utils import api_cache
 
 @api_cache
-def flipside_api_results(query=None, query_run_id=None, attempts=10, delay=30):
-    if not FLIPSIDE_API_KEY:
-        raise ValueError("FLIPSIDE_API_KEY is missing or empty.")
+def flipside_api_results(query=None, query_run_id=None, api_key=None, attempts=10, delay=30):
+    if not api_key:
+        if not FLIPSIDE_API_KEY:
+            raise ValueError("FLIPSIDE_API_KEY is missing or empty.")
     if query is None and query_run_id is None:
         raise ValueError("You must provide either a SQL query or an existing query_run_id.")
+    
+    if api_key:
+        FLIPSIDE_API_KEY = api_key
 
     url = "https://api-v2.flipsidecrypto.xyz/json-rpc"
     headers = {"Content-Type": "application/json", "x-api-key": FLIPSIDE_API_KEY}

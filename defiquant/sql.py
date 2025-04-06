@@ -73,6 +73,48 @@ def token_dex_stats(network, token_address, start_date, freq='h'):
   return query
 
 def active_addresses(address, network, start_date, freq='h'):
+    freq = freq.lower()
+    interval = PANDAS_TO_SNOWFLAKE_INTERVAL.get(freq)
+    if not interval:
+        raise ValueError(f"Unsupported frequency: {freq}")
+
+    query = f"""
+    WITH RECURSIVE date_series AS (
+      SELECT TIMESTAMP '{start_date}' AS DT
+      UNION ALL
+      SELECT DT + INTERVAL '1 {interval}'
+      FROM date_series
+      WHERE DT + INTERVAL '1 {interval}' <= CURRENT_TIMESTAMP
+    ),
+
+    data AS (
+      SELECT dt, COUNT(DISTINCT address) AS active_addresses
+      FROM (
+        SELECT DATE_TRUNC('{interval}', block_timestamp) AS dt,
+               ORIGIN_FROM_ADDRESS AS address
+        FROM {network}.core.ez_token_transfers
+        WHERE CONTRACT_ADDRESS = LOWER('{address}')
+
+        UNION ALL
+
+        SELECT DATE_TRUNC('{interval}', block_timestamp) AS dt,
+               ORIGIN_TO_ADDRESS AS address
+        FROM {network}.core.ez_token_transfers
+        WHERE CONTRACT_ADDRESS = LOWER('{address}')
+      )
+      GROUP BY dt
+    )
+
+    SELECT 
+        dss.dt,
+        COALESCE(d.active_addresses, 0) AS active_addresses 
+    FROM date_series AS dss
+    LEFT JOIN data AS d 
+        ON dss.dt = d.dt;
+    """
+    return query
+
+def transactions_overtime(address, network, start_date, freq='h'):
 
   freq = freq.lower()
   interval = PANDAS_TO_SNOWFLAKE_INTERVAL.get(freq)
